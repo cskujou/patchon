@@ -1,0 +1,4 @@
+[tool.maturin]
+python-source = "../src"
+python-packages = ["patchon"]
+module-name = "patchon_rust"

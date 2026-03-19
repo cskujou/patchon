@@ -1,0 +1,22 @@
+# Example patchon.yaml configuration
+# Place this file in your project root or use [tool.patchon] in pyproject.toml
+
+# Enable verbose output
+verbose: false
+
+# Strict mode: fail on any patch error
+strict: true
+
+# Define patches to apply before running Python scripts
+patches:
+  # Example: Patch a specific package version
+  - package: "requests"
+    expected_version: "2.31.0"
+    patch_root: "./patches/requests"
+
+  # Example: Patch without version check
+  - package: "mypackage"
+    patch_root: "./patches/mypackage"
+
+# The patch_root path is relative to this configuration file's directory.
+# Each .py file in patch_root is mapped to the corresponding file in the installed package.
