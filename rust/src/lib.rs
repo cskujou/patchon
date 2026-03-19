@@ -258,9 +258,7 @@ fn acquire_file_lock(lock_path: &str, timeout_secs: Option<u64>) -> PyResult<isi
     use std::os::windows::ffi::OsStrExt;
     use std::time::{Duration, Instant};
     use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, ERROR_LOCK_VIOLATION, HANDLE};
-    use windows_sys::Win32::Storage::FileSystem::{
-        LockFile, FILE_GENERIC_READ, FILE_GENERIC_WRITE, OPEN_ALWAYS,
-    };
+    use windows_sys::Win32::Storage::FileSystem::{LockFile, FILE_GENERIC_READ, FILE_GENERIC_WRITE, OPEN_ALWAYS};
     use windows_sys::Win32::System::WindowsProgramming::CreateFileW;
 
     let timeout = Duration::from_secs(timeout_secs.unwrap_or(30));
@@ -419,9 +417,7 @@ fn try_acquire_lock(path: &Path) -> Result<i32, Box<dyn std::error::Error>> {
 fn try_acquire_lock(path: &Path) -> Result<isize, Box<dyn std::error::Error>> {
     use std::os::windows::ffi::OsStrExt;
     use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
-    use windows_sys::Win32::Storage::FileSystem::{
-        LockFile, FILE_GENERIC_READ, FILE_GENERIC_WRITE, OPEN_ALWAYS,
-    };
+    use windows_sys::Win32::Storage::FileSystem::{LockFile, FILE_GENERIC_READ, FILE_GENERIC_WRITE, OPEN_ALWAYS};
     use windows_sys::Win32::System::WindowsProgramming::CreateFileW;
 
     let wide_path: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
