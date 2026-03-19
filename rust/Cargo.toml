@@ -8,18 +8,24 @@ license = "MIT"
 rust-version = "1.75"
 
 [lib]
-name = "patchon_rust"
+name = "_rust_ext"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "=1.0.115"
+walkdir = "2"
+rayon = "=1.8"
+rayon-core = "=1.12"
+tempfile = "=3.14.0"
+
+[target.'cfg(unix)'.dependencies]
 nix = { version = "0.26", features = ["process", "signal", "fs"] }
 libc = "0.2"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-walkdir = "2"
-rayon = "1.10"
-tempfile = "3.15"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.48", features = ["Win32_System_Threading", "Win32_Foundation", "Win32_Storage_FileSystem"] }
 
 [profile.release]
 opt-level = 3

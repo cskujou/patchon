@@ -1,20 +1,17 @@
 """Tests for config parsing."""
 
-import tempfile
 from pathlib import Path
 
-import pytest
 import yaml
 
 from patchon.config import load_config
-from patchon.models import Config
 
 
 def test_load_pyproject(tmp_path: Path):
     """Test loading config from pyproject.toml."""
     pyproject = tmp_path / "pyproject.toml"
     pyproject.write_text(
-        '''
+        """
 [project]
 name = "test"
 
@@ -30,7 +27,7 @@ patch_root = "./patches/mypackage"
 [[tool.patchon.patches]]
 package = "otherpackage"
 patch_root = "./patches/other"
-'''
+"""
     )
 
     config = load_config(pyproject, "pyproject")

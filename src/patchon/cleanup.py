@@ -9,12 +9,10 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import re
 import shutil
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from ._native import is_process_alive
 
@@ -36,6 +34,16 @@ class PatchState:
         config_path: str,
         timestamp: str | None = None,
     ):
+        """Initialize patch state.
+
+        Args:
+            pid: Process ID that created the state
+            env_id: Environment identifier
+            backups: Mapping of original_path -> backup_path
+            patched_files: List of patched file paths
+            config_path: Path to configuration file
+            timestamp: Optional timestamp string
+        """
         self.pid = pid
         self.env_id = env_id
         self.backups = backups  # original_path -> backup_path
@@ -44,6 +52,7 @@ class PatchState:
         self.timestamp = timestamp or datetime.now().isoformat()
 
     def to_dict(self) -> dict:
+        """Convert state to dictionary."""
         return {
             "version": STATE_FILE_VERSION,
             "pid": self.pid,
@@ -56,6 +65,7 @@ class PatchState:
 
     @classmethod
     def from_dict(cls, data: dict) -> PatchState:
+        """Create PatchState from dictionary."""
         return cls(
             pid=data["pid"],
             env_id=data["env_id"],
@@ -70,6 +80,11 @@ class StateManager:
     """Manages persistence of patching state."""
 
     def __init__(self, state_dir: Path | None = None):
+        """Initialize state manager.
+
+        Args:
+            state_dir: Directory for storing state files (default: tempdir/patchon_state)
+        """
         self.state_dir = state_dir or Path(tempfile.gettempdir()) / "patchon_state"
         self.state_dir.mkdir(parents=True, exist_ok=True)
 
@@ -81,7 +96,7 @@ class StateManager:
     def save_state(self, state: PatchState) -> None:
         """Save patching state to disk."""
         state_file = self._get_state_file(state.env_id)
-        with open(state_file, "w") as f:
+        with state_file.open("w") as f:
             json.dump(state.to_dict(), f, indent=2)
         logger.debug(f"Saved state to {state_file}")
 
@@ -91,7 +106,7 @@ class StateManager:
         if not state_file.exists():
             return None
         try:
-            with open(state_file) as f:
+            with state_file.open() as f:
                 data = json.load(f)
             return PatchState.from_dict(data)
         except Exception as e:
@@ -110,7 +125,7 @@ class StateManager:
         states = []
         for state_file in self.state_dir.glob("*.json"):
             try:
-                with open(state_file) as f:
+                with state_file.open() as f:
                     data = json.load(f)
                 state = PatchState.from_dict(data)
                 # Extract env_id from filename
@@ -139,7 +154,7 @@ def find_orphaned_backups(
     orphaned = []
     cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
 
-    for env_id, state in state_manager.list_all_states():
+    for _env_id, state in state_manager.list_all_states():
         # Check if process is still alive
         if is_process_alive(state.pid):
             logger.debug(f"Process {state.pid} is still alive, skipping")
@@ -205,11 +220,11 @@ def cleanup_all(
         Tuple of (restored_count, failed_count)
     """
     state_manager = StateManager()
-    
+
     if force:
         # In force mode, don't filter by process alive check
         orphaned = []
-        for env_id, state in state_manager.list_all_states():
+        for _env_id, state in state_manager.list_all_states():
             for original, backup in state.backups.items():
                 original_path = Path(original)
                 backup_path = Path(backup)
@@ -257,7 +272,7 @@ def _clean_stale_states(state_manager: StateManager) -> None:
             if Path(backup).exists():
                 has_valid_backup = True
                 break
-        
+
         if not has_valid_backup:
             state_manager.remove_state(env_id)
             logger.debug(f"Cleaned up stale state for {env_id}")
@@ -267,13 +282,13 @@ def check_status() -> dict:
     """Check current cleanup status and return diagnostic info."""
     state_manager = StateManager()
     states = state_manager.list_all_states()
-    
+
     active_processes = 0
     orphaned_processes = 0
     total_backups = 0
     orphaned_backups = 0
 
-    for env_id, state in states:
+    for _env_id, state in states:
         is_alive = is_process_alive(state.pid)
         if is_alive:
             active_processes += 1
@@ -303,10 +318,10 @@ def format_status(status: dict) -> str:
         f"  Total backups tracked: {status['total_backups_tracked']}",
         f"  Orphaned backups: {status['orphaned_backups']}",
     ]
-    
-    if status['cleanup_needed']:
+
+    if status["cleanup_needed"]:
         lines.append("\n  ⚠️  Cleanup is needed - run 'patchon --cleanup'")
     else:
         lines.append("\n  ✓  No cleanup needed")
-    
+
     return "\n".join(lines)

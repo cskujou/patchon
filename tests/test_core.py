@@ -1,14 +1,11 @@
 """Tests for core patching logic."""
 
-import tempfile
+import tempfile as _tf
 from pathlib import Path
-import shutil
-import sys
 
+from patchon._native import cleanup_stale_locks
 from patchon.core import PatchSession
 from patchon.models import Config, PatchConfig
-from patchon._native import cleanup_stale_locks
-import tempfile as _tf
 
 
 # Clean up stale locks before each test module
@@ -44,7 +41,7 @@ def test_check_version_existing_package():
     session = PatchSession(config)
 
     # yaml should be available via pyyaml
-    ok = session._check_version("pyyaml", "6.0.1") if session._check_version("yaml", "") else True
+    session._check_version("pyyaml", "6.0.1") if session._check_version("yaml", "") else True
     # Just test the method doesn't crash
 
 
@@ -102,8 +99,6 @@ def test_session_apply_and_restore(tmp_path: Path):
 
 def test_dry_run(tmp_path: Path, caplog):
     """Test dry-run mode doesn't modify files."""
-    import logging
-
     pkg_dir = tmp_path / "mock_pkg"
     pkg_dir.mkdir()
     init_file = pkg_dir / "__init__.py"
@@ -159,7 +154,7 @@ def test_new_file_warning(tmp_path: Path, caplog):
     session._find_package_path = lambda name: pkg_dir
 
     # Should complete but with warning
-    import logging
+
     try:
         with caplog.at_level(logging.WARNING, logger="patchon"):
             assert session.apply_all() is True

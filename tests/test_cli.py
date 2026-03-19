@@ -1,7 +1,5 @@
 """Tests for CLI."""
 
-import pytest
-
 from patchon.cli import split_args
 
 

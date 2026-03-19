@@ -5,14 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import subprocess
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from . import __version__
-from .cleanup import cleanup_all, check_status, format_status
+from .cleanup import check_status, cleanup_all, format_status
 from .config import load_config
 from .core import PatchSession
 from .discover import discover_config
@@ -49,68 +48,32 @@ def parse_args(args: Sequence[str] | None = None) -> tuple[argparse.Namespace, l
     )
 
     # patchon-specific options
-    parser.add_argument(
-        "-h", "--help",
-        action="store_true",
-        help="Show this help message and exit"
-    )
-    parser.add_argument(
-        "-V", "--version",
-        action="store_true",
-        help="Show version and exit"
-    )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check configuration without running"
-    )
-    parser.add_argument(
-        "--print-config",
-        action="store_true",
-        help="Print configuration and exit"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be patched without applying"
-    )
+    parser.add_argument("-h", "--help", action="store_true", help="Show this help message and exit")
+    parser.add_argument("-V", "--version", action="store_true", help="Show version and exit")
+    parser.add_argument("--check", action="store_true", help="Check configuration without running")
+    parser.add_argument("--print-config", action="store_true", help="Print configuration and exit")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be patched without applying")
     parser.add_argument(
         "--cleanup",
         action="store_true",
-        help="Recover files left in patched state due to crash or SIGKILL"
+        help="Recover files left in patched state due to crash or SIGKILL",
     )
     parser.add_argument(
         "--cleanup-status",
         action="store_true",
-        help="Show status of orphaned patches and cleanup needs"
+        help="Show status of orphaned patches and cleanup needs",
     )
     parser.add_argument(
         "--cleanup-force",
         action="store_true",
-        help="Force cleanup even if process may still be alive (use with caution)"
+        help="Force cleanup even if process may still be alive (use with caution)",
     )
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Enable verbose output"
-    )
-    parser.add_argument(
-        "-q", "--quiet",
-        action="store_true",
-        help="Suppress non-error output"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Suppress non-error output")
 
     # Python-specific flags we need to recognize
-    parser.add_argument(
-        "-m",
-        dest="module",
-        help="Run library module as a script"
-    )
-    parser.add_argument(
-        "-c",
-        dest="command",
-        help="Program passed in as string"
-    )
+    parser.add_argument("-m", dest="module", help="Run library module as a script")
+    parser.add_argument("-c", dest="command", help="Program passed in as string")
 
     # Collect known args and remaining
     parsed, remaining = parser.parse_known_args(args)
@@ -134,8 +97,19 @@ def split_args(args: Sequence[str] | None) -> tuple[argparse.Namespace, list[str
     python_args = []
 
     # Known patchon-only flags (not -m/-c)
-    patchon_flags = {"-h", "--help", "-V", "--version", "--check", "--print-config",
-                     "--dry-run", "-v", "--verbose", "-q", "--quiet"}
+    patchon_flags = {
+        "-h",
+        "--help",
+        "-V",
+        "--version",
+        "--check",
+        "--print-config",
+        "--dry-run",
+        "-v",
+        "--verbose",
+        "-q",
+        "--quiet",
+    }
 
     # Python flags that change execution mode
     mode_flags = {"-m", "-c"}
@@ -162,11 +136,10 @@ def split_args(args: Sequence[str] | None) -> tuple[argparse.Namespace, list[str
                 # Also add to patchon_opts so parse_args can set module/command
                 patchon_opts.extend([arg, args[i + 1]])
                 break
-            else:
-                # No value provided, add flag only
-                python_args = args[i:]
-                patchon_opts.append(arg)
-                break
+            # No value provided, add flag only
+            python_args = args[i:]
+            patchon_opts.append(arg)
+            break
         elif arg.startswith("-"):
             # Unknown flag - check if it takes a value
             if i + 1 < len(args) and not args[i + 1].startswith("-"):
@@ -261,9 +234,8 @@ def main(args: Sequence[str] | None = None) -> int:
         if failed == 0:
             logger.info(f"Cleanup complete: {restored} file(s) restored")
             return 0
-        else:
-            logger.error(f"Cleanup completed with errors: {restored} restored, {failed} failed")
-            return 1
+        logger.error(f"Cleanup completed with errors: {restored} restored, {failed} failed")
+        return 1
 
     # Discover and load configuration
     discovered = discover_config()
@@ -273,9 +245,9 @@ def main(args: Sequence[str] | None = None) -> int:
         logger.error("Starting from current directory: %s", Path.cwd())
         logger.error("")
         logger.error("Example pyproject.toml:")
-        logger.error('  [tool.patchon]')
-        logger.error('  verbose = true')
-        logger.error('  [[tool.patchon.patches]]')
+        logger.error("  [tool.patchon]")
+        logger.error("  verbose = true")
+        logger.error("  [[tool.patchon.patches]]")
         logger.error('  package = "mypackage"')
         logger.error('  expected_version = "1.0.0"')
         logger.error('  patch_root = "./patches/mypackage"')
@@ -283,7 +255,7 @@ def main(args: Sequence[str] | None = None) -> int:
         logger.error("Example patchon.yaml:")
         logger.error("  verbose: true")
         logger.error("  patches:")
-        logger.error('    - package: mypackage')
+        logger.error("    - package: mypackage")
         logger.error('      expected_version: "1.0.0"')
         logger.error('      patch_root: "./patches/mypackage"')
         return 1

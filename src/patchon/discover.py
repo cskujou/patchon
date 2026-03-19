@@ -28,10 +28,9 @@ def discover_config(start_dir: Path | None = None) -> tuple[Path, str] | None:
 
     # First pass: find pyproject.toml with [tool.patchon]
     pyproject_path = _find_nearest_pyproject(current)
-    if pyproject_path:
-        if _has_patchon_section(pyproject_path):
-            logger.debug(f"Found pyproject.toml with [tool.patchon]: {pyproject_path}")
-            return (pyproject_path, "pyproject")
+    if pyproject_path and _has_patchon_section(pyproject_path):
+        logger.debug(f"Found pyproject.toml with [tool.patchon]: {pyproject_path}")
+        return (pyproject_path, "pyproject")
 
     # Second pass: find patchon.yaml
     yaml_path = _find_nearest_yaml(current)
@@ -79,7 +78,7 @@ def _has_patchon_section(pyproject_path: Path) -> bool:
     try:
         import tomllib
 
-        with open(pyproject_path, "rb") as f:
+        with pyproject_path.open("rb") as f:
             data = tomllib.load(f)
 
         return "tool" in data and "patchon" in data["tool"]

@@ -25,34 +25,29 @@ def load_config(config_path: Path, source_type: str) -> Config:
     """
     if source_type == "pyproject":
         return _load_pyproject(config_path)
-    elif source_type in ("yaml", "yml"):
+    if source_type in ("yaml", "yml"):
         return _load_yaml(config_path)
-    else:
-        raise ValueError(f"Unknown config source type: {source_type}")
+    raise ValueError(f"Unknown config source type: {source_type}")
 
 
 def _load_pyproject(config_path: Path) -> Config:
     """Load configuration from pyproject.toml."""
     import tomllib
 
-    with open(config_path, "rb") as f:
+    with config_path.open("rb") as f:
         data = tomllib.load(f)
 
     patchon_data = data.get("tool", {}).get("patchon", {})
 
-    return _parse_config_data(
-        patchon_data, config_path, "pyproject.toml", config_path.parent
-    )
+    return _parse_config_data(patchon_data, config_path, "pyproject.toml", config_path.parent)
 
 
 def _load_yaml(config_path: Path) -> Config:
     """Load configuration from patchon.yaml."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    with config_path.open(encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
 
-    return _parse_config_data(
-        data, config_path, "patchon.yaml", config_path.parent
-    )
+    return _parse_config_data(data, config_path, "patchon.yaml", config_path.parent)
 
 
 def _parse_config_data(
@@ -78,12 +73,10 @@ def _parse_config_data(
             )
         )
 
-    config = Config(
+    return Config(
         patches=patches,
         verbose=data.get("verbose", False),
         strict=data.get("strict", True),
         config_path=config_path.resolve(),
         config_source=source_name,
     )
-
-    return config

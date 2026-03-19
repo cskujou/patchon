@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import atexit
-import hashlib
 import importlib.metadata
 import importlib.util
 import logging
@@ -14,18 +13,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ._native import (
-    PatchSession as NativePatchSession,
-    acquire_file_lock,
-    batch_copy_files,
     batch_restore,
-    cleanup_stale_locks,
     fast_file_copy,
-    is_process_alive,
-    release_file_lock,
-    scan_python_files,
 )
-from .lock import EnvironmentLock
 from .cleanup import PatchState, StateManager, generate_env_id
+from .lock import EnvironmentLock
 
 if TYPE_CHECKING:
     from .models import Config, PatchConfig
@@ -37,6 +29,12 @@ class PatchSession:
     """Manages a patching session with automatic restoration."""
 
     def __init__(self, config: Config, dry_run: bool = False):
+        """Initialize patch session.
+
+        Args:
+            config: Patch configuration
+            dry_run: If True, don't actually apply patches
+        """
         self.config = config
         self.dry_run = dry_run
         self.backups: dict[Path, Path] = {}  # original -> backup
@@ -57,11 +55,11 @@ class PatchSession:
         """
         # Acquire environment lock to prevent concurrent patching
         self._env_lock = EnvironmentLock(timeout=60.0)
-        
+
         # Generate environment ID from packages being patched
         packages = [p.package for p in self.config.patches]
         env_id = generate_env_id(packages)
-        
+
         if not self._env_lock.acquire(env_id):
             logger.error(
                 "Failed to acquire environment lock. Another patchon process may be "
@@ -69,38 +67,37 @@ class PatchSession:
                 "run 'patchon --cleanup' if the previous process was terminated."
             )
             return False
-        
+
         logger.debug(f"Acquired environment lock for: {env_id}")
-        
+
         # Initialize state manager for crash recovery
         self._state_manager = StateManager()
-        
+
         success = True
         for patch_config in self.config.patches:
             if not self._apply_patch(patch_config):
                 if self.config.strict:
                     logger.error(f"Failed to apply patch for {patch_config.package}")
                     return False
-                else:
-                    logger.warning(f"Failed to apply patch for {patch_config.package}, continuing")
-                    success = False
-        
+                logger.warning(f"Failed to apply patch for {patch_config.package}, continuing")
+                success = False
+
         # Save initial state for potential cleanup
         self._save_state(env_id)
 
         return success
-    
+
     def _save_state(self, env_id: str) -> None:
         """Save current patching state for crash recovery."""
         if self._state_manager is None or self.dry_run:
             return
-        
+
         config_path_str = str(self.config.config_path) if self.config.config_path else ""
-        
+
         # Convert Path objects to strings for serialization
         backups = {str(k): str(v) for k, v in self.backups.items()}
         patched = [str(p) for p in self.patched_files]
-        
+
         self._state = PatchState(
             pid=os.getpid(),
             env_id=env_id,
@@ -108,7 +105,7 @@ class PatchSession:
             patched_files=patched,
             config_path=config_path_str,
         )
-        
+
         self._state_manager.save_state(self._state)
         logger.debug(f"Saved patch state for PID {os.getpid()}")
 
@@ -125,9 +122,10 @@ class PatchSession:
         logger.debug(f"Package location: {package_path}")
 
         # Check version if specified
-        if patch_config.expected_version:
-            if not self._check_version(patch_config.package, patch_config.expected_version):
-                return False
+        if patch_config.expected_version and not self._check_version(
+            patch_config.package, patch_config.expected_version
+        ):
+            return False
 
         # Validate patch root exists
         if not patch_config.patch_root.exists():
@@ -167,9 +165,7 @@ class PatchSession:
 
         return True
 
-    def _apply_single_file(
-        self, patch_file: Path, target_file: Path, package_name: str
-    ) -> bool:
+    def _apply_single_file(self, patch_file: Path, target_file: Path, _package_name: str) -> bool:
         """Apply a single file patch."""
         # Check for duplicate patch
         if target_file in self.patched_files:
@@ -241,7 +237,7 @@ class PatchSession:
         if len(self.backups) > 1:
             pairs = [(str(b), str(o)) for o, b in self.backups.items()]
             errors = batch_restore(pairs)
-            for (backup, original), err in zip(pairs, errors):
+            for (_backup, _original), err in zip(pairs, errors, strict=False):
                 if err:
                     logger.warning(f"Batch restore warning: {err}")
         else:
@@ -250,11 +246,11 @@ class PatchSession:
 
         self.backups.clear()
         self.patched_files.clear()
-        
+
         # Clean up state file
         if self._state_manager and self._state:
             self._state_manager.remove_state(self._state.env_id)
-        
+
         # Release environment lock
         if self._env_lock:
             self._env_lock.release()
@@ -286,9 +282,8 @@ class PatchSession:
             if origin.name == "__init__.py":
                 # Package directory
                 return origin.parent
-            else:
-                # Single-file module
-                return origin
+            # Single-file module
+            return origin
         except Exception as e:
             logger.debug(f"Error finding package {package_name}: {e}")
             return None
@@ -299,8 +294,7 @@ class PatchSession:
             installed_version = importlib.metadata.version(package_name)
             if installed_version != expected_version:
                 logger.error(
-                    f"Version mismatch for {package_name}: "
-                    f"expected {expected_version}, found {installed_version}"
+                    f"Version mismatch for {package_name}: expected {expected_version}, found {installed_version}"
                 )
                 return False
             logger.debug(f"Version check passed: {package_name} == {expected_version}")
@@ -364,8 +358,6 @@ class PatchSession:
                     missing_targets += 1
 
             if patch_files and missing_targets > len(patch_files) * 0.5:
-                logger.warning(
-                    f"  ! More than 50% of patches are new files ({missing_targets}/{len(patch_files)})"
-                )
+                logger.warning(f"  ! More than 50% of patches are new files ({missing_targets}/{len(patch_files)})")
 
         return all_ok

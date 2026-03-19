@@ -1,11 +1,13 @@
 """Tests for config discovery."""
 
-import os
-import tempfile
 from pathlib import Path
 
-from patchon.discover import discover_config, _find_nearest_pyproject, _find_nearest_yaml
-from patchon.discover import _has_patchon_section
+from patchon.discover import (
+    _find_nearest_pyproject,
+    _find_nearest_yaml,
+    _has_patchon_section,
+    discover_config,
+)
 
 
 def test_find_nearest_pyproject(tmp_path: Path):
@@ -56,9 +58,7 @@ def test_has_patchon_section(tmp_path: Path):
     assert _has_patchon_section(pyproject) is False
 
     # With tool.patchon
-    pyproject.write_text(
-        '[project]\nname = "test"\n\n[tool.patchon]\nverbose = true\n'
-    )
+    pyproject.write_text('[project]\nname = "test"\n\n[tool.patchon]\nverbose = true\n')
     assert _has_patchon_section(pyproject) is True
 
 
@@ -66,9 +66,7 @@ def test_discover_config_pyproject_priority(tmp_path: Path):
     """Test that pyproject.toml with [tool.patchon] takes priority."""
     # Create both pyproject.toml and patchon.yaml
     pyproject = tmp_path / "pyproject.toml"
-    pyproject.write_text(
-        '[project]\nname = "test"\n\n[tool.patchon]\nverbose = true\n'
-    )
+    pyproject.write_text('[project]\nname = "test"\n\n[tool.patchon]\nverbose = true\n')
     yaml_file = tmp_path / "patchon.yaml"
     yaml_file.write_text("verbose: false\n")
 

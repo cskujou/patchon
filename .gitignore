@@ -12,6 +12,11 @@ wheels/
 .coverage
 htmlcov/
 
+# Compiled native extensions
+*.so
+*.dll
+*.dylib
+
 # Virtual environments
 .venv/
 venv/
