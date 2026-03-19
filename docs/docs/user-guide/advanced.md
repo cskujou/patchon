@@ -22,9 +22,10 @@ pip install "patchon[rust]"
 Or build from source:
 
 ```bash
-cd src/patchon/_rust_ext
-cargo build --release
+uv run maturin develop --release
 ```
+
+On Windows, use the GNU Rust toolchain (`x86_64-pc-windows-gnu`) together with `mingw-winlibs-llvm-ucrt` instead of MSVC/Windows SDK.
 
 ### Verify Rust Extension
 

@@ -224,12 +224,17 @@ cd patchon
 # 同步依赖
 uv sync
 
+# Windows 原生构建工具链（GNU，无需 Windows SDK）
+scoop install rustup-gnu mingw-winlibs-llvm-ucrt
+
 # 运行测试
 uv run pytest
 
 # 本地运行 patchon
 uv run patchon --help
 ```
+
+在 Windows 上，Rust 扩展统一基于 `x86_64-pc-windows-gnu` 工具链进行开发，不再依赖单独安装 Windows SDK 或 MSVC Build Tools。
 
 ### 构建
 

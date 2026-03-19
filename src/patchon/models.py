@@ -35,14 +35,14 @@ class Config:
         """Convert config to dictionary for display."""
         return {
             "config_source": self.config_source,
-            "config_path": str(self.config_path) if self.config_path else None,
+            "config_path": self.config_path.as_posix() if self.config_path else None,
             "verbose": self.verbose,
             "strict": self.strict,
             "patches": [
                 {
                     "package": p.package,
                     "expected_version": p.expected_version,
-                    "patch_root": str(p.patch_root),
+                    "patch_root": p.patch_root.as_posix(),
                 }
                 for p in self.patches
             ],

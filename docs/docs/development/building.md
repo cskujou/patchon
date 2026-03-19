@@ -15,6 +15,7 @@ This guide explains how to build `patchon` from source using **uv** as the prima
 
 - Rust toolchain (latest stable)
 - cargo (comes with Rust)
+- On Windows: GNU toolchain support via `rustup-gnu` and `mingw-winlibs-llvm-ucrt`
 
 ## Setup
 
@@ -66,13 +67,17 @@ uv add patchon
 For optimal performance, build with the Rust extension:
 
 ```bash
-# Install Rust (if not already installed)
+# Windows (recommended)
+scoop install rustup-gnu mingw-winlibs-llvm-ucrt
+
+# macOS/Linux
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source $HOME/.cargo/env
 
 # Build and install with Rust extension using maturin
 uv run maturin develop --release
 ```
+
+On Windows, `patchon` targets `x86_64-pc-windows-gnu` for local development. This avoids requiring MSVC Build Tools or the Windows SDK.
 
 ## uv Workflow Commands
 
@@ -160,11 +165,13 @@ patchon/
 │   │   ├── config.py          # Configuration parsing
 │   │   ├── discover.py        # Config auto-discovery
 │   │   ├── cleanup.py         # Crash recovery
-│   │   └── _rust_ext/         # Rust extension module
-│   │       ├── Cargo.toml     # Rust package manifest
-│   │       ├── __init__.py    # Python-Rust bridge
-│   │       └── src/
-│   │           └── lib.rs     # Rust source code
+│   └── patchon/
+│       ├── _native/           # Python/native abstraction layer
+│       └── ...
+├── rust/                      # Rust extension crate
+│   ├── Cargo.toml             # Rust package manifest
+│   └── src/
+│       └── lib.rs             # Rust source code
 ├── tests/                      # Test suite
 │   ├── test_cli.py
 │   ├── test_core.py
@@ -183,9 +190,11 @@ patchon/
 **Error**: `cargo not found`
 
 ```bash
-# Install Rust
+# Windows
+scoop install rustup-gnu mingw-winlibs-llvm-ucrt
+
+# macOS/Linux
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source $HOME/.cargo/env
 ```
 
 **Error**: `linker 'cc' not found` (Linux)
@@ -253,6 +262,14 @@ uv run maturin develop --release
 # Test the changes
 uv run patchon --version
 ```
+
+On Windows, make sure the active Rust toolchain is GNU:
+
+```bash
+rustup show
+```
+
+You should see `x86_64-pc-windows-gnu` as the active default toolchain.
 
 ### Release Process
 

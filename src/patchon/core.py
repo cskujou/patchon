@@ -208,7 +208,7 @@ class PatchSession:
         try:
             backup = Path(tempfile.mktemp(suffix=f".{original.name}.backup"))
             # Use fast copy (Rust-accelerated if available)
-            fast_file_copy(original, backup)
+            fast_file_copy(str(original), str(backup))
             self.backups[original] = backup
             # Update state after each backup
             if self._state and self._state_manager:
@@ -259,7 +259,7 @@ class PatchSession:
         """Restore a single file from backup."""
         try:
             if backup.exists():
-                fast_file_copy(backup, original)
+                fast_file_copy(str(backup), str(original))
                 backup.unlink()
                 logger.debug(f"Restored: {original}")
         except Exception as e:

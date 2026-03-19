@@ -38,7 +38,8 @@ patch_root = "./patches/other"
     assert config.patches[0].package == "mypackage"
     assert config.patches[0].expected_version == "1.0.0"
     # patch_root should be resolved relative to config location
-    assert "patches/mypackage" in str(config.patches[0].patch_root)
+    assert config.patches[0].patch_root.name == "mypackage"
+    assert config.patches[0].patch_root.parent.name == "patches"
 
 
 def test_load_yaml(tmp_path: Path):

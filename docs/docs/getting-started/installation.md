@@ -69,7 +69,7 @@ This enables:
 
 !!! note "Rust Toolchain Required"
     Installing with Rust extensions requires a working Rust toolchain.
-    Install Rust from [rustup.rs](https://rustup.rs/).
+    On Windows, prefer the GNU toolchain (`x86_64-pc-windows-gnu`) so no separate Windows SDK or MSVC installation is needed.
 
 ## Development Installation
 
@@ -81,11 +81,17 @@ cd patchon
 
 # With uv (recommended)
 uv sync
-cd src/patchon/_rust_ext && cargo build --release
+uv run maturin develop --release
 
 # Or with pip
 pip install -e ".[dev]"
-maturin develop --release -m src/patchon/_rust_ext/Cargo.toml
+maturin develop --release
+```
+
+On Windows, install the GNU Rust toolchain and linker first:
+
+```bash
+scoop install rustup-gnu mingw-winlibs-llvm-ucrt
 ```
 
 ## Verify Installation

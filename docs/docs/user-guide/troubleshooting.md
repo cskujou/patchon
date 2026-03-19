@@ -119,6 +119,10 @@ pip install --force-reinstall requests
 1. Install Rust:
 
 ```bash
+# Windows
+scoop install rustup-gnu mingw-winlibs-llvm-ucrt
+
+# macOS/Linux
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
@@ -134,6 +138,8 @@ pip install patchon  # No [rust] extra
 pip install maturin
 maturin develop --release
 ```
+
+On Windows, `patchon` development uses the GNU Rust target rather than MSVC. If `rustup show` does not report `x86_64-pc-windows-gnu` as active, switch to the GNU toolchain before rebuilding.
 
 ### Permission Errors
 

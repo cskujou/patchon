@@ -14,10 +14,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from patchon_rust import (
+    from patchon._native._rust_ext import (
         PatchSessionRust as PatchSession,
     )
-    from patchon_rust import (
+    from patchon._native._rust_ext import (
         acquire_file_lock,
         atomic_write_with_backup,
         batch_copy_files,
@@ -32,10 +32,10 @@ if TYPE_CHECKING:
     )
 else:
     # Import from Rust module (runtime)
-    from patchon_rust import (  # type: ignore[import-not-found]
+    from patchon._native._rust_ext import (  # type: ignore[import-not-found]
         PatchSessionRust as PatchSession,
     )
-    from patchon_rust import (
+    from patchon._native._rust_ext import (
         acquire_file_lock,
         atomic_write_with_backup,
         batch_copy_files,

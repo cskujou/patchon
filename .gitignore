@@ -33,4 +33,9 @@ uv.lock
 
 # Rust
 rust/target/
+rust-target-gnu/
 patchon_rs/
+
+# Local debugging / probes
+tools/
+.cargo/

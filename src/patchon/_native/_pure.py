@@ -6,13 +6,15 @@ for maximum compatibility.
 
 from __future__ import annotations
 
-import fcntl
+import fcntl as _fcntl
 import hashlib
 import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+FCNTL: Any = _fcntl
 
 if TYPE_CHECKING:
     pass
@@ -107,7 +109,7 @@ def acquire_file_lock(lock_path: str, timeout_secs: int = 30) -> int:
 
     while time.time() - start < timeout_secs:
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            FCNTL.flock(fd, FCNTL.LOCK_EX | FCNTL.LOCK_NB)
             return fd
         except OSError:
             time.sleep(0.01)
@@ -118,7 +120,7 @@ def acquire_file_lock(lock_path: str, timeout_secs: int = 30) -> int:
 
 def release_file_lock(fd: int) -> None:
     """Release file lock."""
-    fcntl.flock(fd, fcntl.LOCK_UN)
+    FCNTL.flock(fd, FCNTL.LOCK_UN)
     os.close(fd)
 
 
@@ -143,9 +145,9 @@ def cleanup_stale_locks(lock_dir: str) -> int:
         try:
             fd = os.open(lock_file, os.O_RDWR)
             try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                FCNTL.flock(fd, FCNTL.LOCK_EX | FCNTL.LOCK_NB)
                 # If we can acquire the lock, it's stale
-                fcntl.flock(fd, fcntl.LOCK_UN)
+                FCNTL.flock(fd, FCNTL.LOCK_UN)
                 Path(lock_file).unlink()
                 cleaned += 1
             except Exception:

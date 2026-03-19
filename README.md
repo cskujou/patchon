@@ -224,12 +224,17 @@ cd patchon
 # Sync dependencies
 uv sync
 
+# Windows native build toolchain (GNU, no Windows SDK required)
+scoop install rustup-gnu mingw-winlibs-llvm-ucrt
+
 # Run tests
 uv run pytest
 
 # Run patchon locally
 uv run patchon --help
 ```
+
+On Windows, the Rust extension is developed against the `x86_64-pc-windows-gnu` toolchain rather than MSVC, so a separate Windows SDK installation is not required.
 
 ### Build
 
