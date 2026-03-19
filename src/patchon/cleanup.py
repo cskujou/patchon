@@ -51,7 +51,7 @@ class PatchState:
         self.config_path = config_path
         self.timestamp = timestamp or datetime.now().isoformat()
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, object]:
         """Convert state to dictionary."""
         return {
             "version": STATE_FILE_VERSION,
@@ -64,15 +64,17 @@ class PatchState:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> PatchState:
+    def from_dict(cls, data: dict[str, object]) -> PatchState:
         """Create PatchState from dictionary."""
+        from typing import cast
+
         return cls(
-            pid=data["pid"],
-            env_id=data["env_id"],
-            backups=data.get("backups", {}),
-            patched_files=data.get("patched_files", []),
-            config_path=data.get("config_path", ""),
-            timestamp=data.get("timestamp"),
+            pid=cast(int, data["pid"]),
+            env_id=cast(str, data["env_id"]),
+            backups=cast(dict[str, str], data.get("backups", {})),
+            patched_files=cast(list[str], data.get("patched_files", [])),
+            config_path=cast(str, data.get("config_path", "")),
+            timestamp=cast(str | None, data.get("timestamp")),
         )
 
 
@@ -221,13 +223,14 @@ def cleanup_all(
     """
     state_manager = StateManager()
 
+    orphaned: list[tuple[Path, Path, PatchState]]
     if force:
         # In force mode, don't filter by process alive check
         orphaned = []
         for _env_id, state in state_manager.list_all_states():
-            for original, backup in state.backups.items():
-                original_path = Path(original)
-                backup_path = Path(backup)
+            for original_str, backup_str in state.backups.items():
+                original_path = Path(original_str)
+                backup_path = Path(backup_str)
                 if backup_path.exists():
                     orphaned.append((original_path, backup_path, state))
     else:
@@ -278,7 +281,7 @@ def _clean_stale_states(state_manager: StateManager) -> None:
             logger.debug(f"Cleaned up stale state for {env_id}")
 
 
-def check_status() -> dict:
+def check_status() -> dict[str, object]:
     """Check current cleanup status and return diagnostic info."""
     state_manager = StateManager()
     states = state_manager.list_all_states()
@@ -309,7 +312,7 @@ def check_status() -> dict:
     }
 
 
-def format_status(status: dict) -> str:
+def format_status(status: dict[str, object]) -> str:
     """Format status dict into human-readable string."""
     lines = [
         "Patchon Cleanup Status:",

@@ -15,9 +15,7 @@ from __future__ import annotations
 
 try:
     from ._rust import (
-        PatchSessionRust as PatchSession,
-    )
-    from ._rust import (
+        PatchSession,
         acquire_file_lock,
         atomic_write_with_backup,
         batch_copy_files,

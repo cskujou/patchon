@@ -93,8 +93,8 @@ def split_args(args: Sequence[str] | None) -> tuple[argparse.Namespace, list[str
     if args is None:
         args = sys.argv[1:]
 
-    patchon_opts = []
-    python_args = []
+    patchon_opts: list[str] = []
+    python_args: list[str] = []
 
     # Known patchon-only flags (not -m/-c)
     patchon_flags = {
@@ -121,7 +121,7 @@ def split_args(args: Sequence[str] | None) -> tuple[argparse.Namespace, list[str
 
         if found_python_mode:
             # Everything after finding -m/-c (and its value) goes to python args
-            python_args = args[i:]
+            python_args = list(args[i:])
             break
 
         if arg in patchon_flags:
@@ -132,12 +132,12 @@ def split_args(args: Sequence[str] | None) -> tuple[argparse.Namespace, list[str
             # The flag and its value ARE part of python args,
             # but we also want to capture it for patchon's use
             if i + 1 < len(args):
-                python_args = args[i:]
+                python_args = list(args[i:])
                 # Also add to patchon_opts so parse_args can set module/command
                 patchon_opts.extend([arg, args[i + 1]])
                 break
             # No value provided, add flag only
-            python_args = args[i:]
+            python_args = list(args[i:])
             patchon_opts.append(arg)
             break
         elif arg.startswith("-"):
@@ -147,11 +147,11 @@ def split_args(args: Sequence[str] | None) -> tuple[argparse.Namespace, list[str
                 i += 1
             else:
                 # Unknown flag, treat as start of python args
-                python_args = args[i:]
+                python_args = list(args[i:])
                 break
         else:
             # First non-option arg and everything after goes to python
-            python_args = args[i:]
+            python_args = list(args[i:])
             break
 
     parsed, _ = parse_args(patchon_opts)

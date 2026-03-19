@@ -27,7 +27,7 @@ def fast_file_copy(src: str, dst: str) -> None:
 
 def batch_copy_files(operations: list[tuple[str, str]]) -> list[str | None]:
     """Execute multiple copy operations."""
-    results = []
+    results: list[str | None] = []
     for src, dst in operations:
         try:
             fast_file_copy(src, dst)
@@ -88,7 +88,7 @@ def restore_from_backup(backup_path: str, target: str) -> None:
 
 def batch_restore(backups: list[tuple[str, str]]) -> list[str | None]:
     """Execute multiple restore operations."""
-    results = []
+    results: list[str | None] = []
     for backup, target in backups:
         try:
             restore_from_backup(backup, target)
@@ -161,7 +161,7 @@ def cleanup_stale_locks(lock_dir: str) -> int:
 class PatchSession:
     """Pure Python implementation of patch session."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._applied: dict[str, str] = {}
         self._lock_fd: int | None = None
 
