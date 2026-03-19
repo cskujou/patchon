@@ -257,10 +257,11 @@ fn release_file_lock(fd: i32) -> PyResult<()> {
 fn acquire_file_lock(lock_path: &str, timeout_secs: Option<u64>) -> PyResult<isize> {
     use std::os::windows::ffi::OsStrExt;
     use std::time::{Duration, Instant};
-    use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, ERROR_LOCK_VIOLATION};
+    use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, ERROR_LOCK_VIOLATION, HANDLE};
     use windows_sys::Win32::Storage::FileSystem::{
-        CreateFileW, LockFile, FILE_GENERIC_READ, FILE_GENERIC_WRITE, OPEN_ALWAYS,
+        LockFile, FILE_GENERIC_READ, FILE_GENERIC_WRITE, OPEN_ALWAYS,
     };
+    use windows_sys::Win32::System::WindowsProgramming::CreateFileW;
 
     let timeout = Duration::from_secs(timeout_secs.unwrap_or(30));
     let start = Instant::now();
@@ -318,18 +319,18 @@ fn acquire_file_lock(lock_path: &str, timeout_secs: Option<u64>) -> PyResult<isi
 #[cfg(windows)]
 #[pyfunction]
 fn release_file_lock(handle: isize) -> PyResult<()> {
-    use windows_sys::Win32::Foundation::CloseHandle;
+    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
     use windows_sys::Win32::Storage::FileSystem::UnlockFile;
 
     unsafe {
-        let unlock_result = UnlockFile(handle as usize, 0, 0, u32::MAX, u32::MAX);
+        let unlock_result = UnlockFile(handle as HANDLE, 0, 0, u32::MAX, u32::MAX);
         if unlock_result == 0 {
             return Err(pyo3::exceptions::PyIOError::new_err(
                 "Failed to unlock file".to_string(),
             ));
         }
 
-        let close_result = CloseHandle(handle as usize);
+        let close_result = CloseHandle(handle as HANDLE);
         if close_result == 0 {
             return Err(pyo3::exceptions::PyIOError::new_err(
                 "Failed to close file handle".to_string(),
@@ -352,7 +353,7 @@ fn is_process_alive(pid: i32) -> bool {
 #[cfg(windows)]
 #[pyfunction]
 fn is_process_alive(pid: i32) -> bool {
-    use windows_sys::Win32::Foundation::{CloseHandle, GetLastError};
+    use windows_sys::Win32::Foundation::CloseHandle;
     use windows_sys::Win32::System::Threading::OpenProcess;
     use windows_sys::Win32::System::Threading::PROCESS_QUERY_INFORMATION;
 
@@ -417,10 +418,11 @@ fn try_acquire_lock(path: &Path) -> Result<i32, Box<dyn std::error::Error>> {
 #[cfg(windows)]
 fn try_acquire_lock(path: &Path) -> Result<isize, Box<dyn std::error::Error>> {
     use std::os::windows::ffi::OsStrExt;
-    use windows_sys::Win32::Foundation::CloseHandle;
+    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
     use windows_sys::Win32::Storage::FileSystem::{
-        CreateFileW, LockFile, FILE_GENERIC_READ, FILE_GENERIC_WRITE, OPEN_ALWAYS,
+        LockFile, FILE_GENERIC_READ, FILE_GENERIC_WRITE, OPEN_ALWAYS,
     };
+    use windows_sys::Win32::System::WindowsProgramming::CreateFileW;
 
     let wide_path: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
 
@@ -435,7 +437,7 @@ fn try_acquire_lock(path: &Path) -> Result<isize, Box<dyn std::error::Error>> {
             std::ptr::null_mut(),
         );
 
-        if handle == -1isize as usize {
+        if handle == -1isize as HANDLE {
             return Err(Box::new(std::io::Error::last_os_error()));
         }
 
