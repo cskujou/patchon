@@ -4,83 +4,47 @@
 [![PyPI](https://img.shields.io/pypi/v/patchon)](https://pypi.org/project/patchon/)
 [![Python](https://img.shields.io/pypi/pyversions/patchon)](https://pypi.org/project/patchon/)
 
-在运行 Python 脚本前自动应用临时源代码补丁，执行完成后自动恢复原文件。
+`patchon` 读作 `patch-on`。它会在运行你的 Python 代码前临时应用源代码补丁，并在执行结束后把原文件恢复回去。
 
 [English README](README.md)
 
-## 为什么需要 patchon？
+## 它是做什么的
 
-在开发或调试 Python 应用时，经常需要临时修改库代码：
-- 添加日志以了解内部行为
-- 在官方修复发布前临时修补 bug
-- 注入性能分析探针
-- 测试变更而不影响全局环境
+当你想临时修改已安装 Python 包的源码，但又不想手改 `site-packages`、事后再手动收拾现场时，就可以用 `patchon`。
 
-`patchon` 提供无缝体验：将补丁作为普通的 `.py` 文件编写，`patchon` 会在运行脚本前自动应用这些补丁，完成后自动恢复原文件。
+常见场景包括：
+
+- 给第三方库临时加日志或打印，方便排查问题
+- 在上游正式发布修复前先套一个本地 hotfix
+- 注入 profiling 或 tracing 代码
+- 安全地复现、验证某个针对依赖包的 workaround
 
 ## 安装
+
+面向用户的安装方式建议用下面两种之一：
 
 ```bash
 pip install patchon
 ```
 
-或使用 `uv`：
+或者用 `uv` 安装成命令行工具：
 
 ```bash
-uv add --dev patchon
+uv tool install patchon
 ```
 
-## 基本用法
+安装后，你就可以像用 `python` 一样直接在 shell 里运行 `patchon`。
 
-### 将 `python` 替换为 `patchon`
+## 快速开始
 
-```bash
-# 之前
-python myscript.py
+### 1. 创建配置
 
-# 之后 - 运行前自动应用补丁
-patchon myscript.py
-```
+`patchon` 会从当前目录开始向上查找：
 
-### 传递参数给脚本
+1. 带有 `[tool.patchon]` 的 `pyproject.toml`
+2. `patchon.yaml`
 
-```bash
-# 之前
-python server.py --port 8000 --debug
-
-# 之后
-patchon server.py --port 8000 --debug
-```
-
-### 运行模块
-
-```bash
-# 之前
-python -m http.server 8000
-
-# 之后
-patchon -m http.server 8000
-```
-
-### 执行命令字符串
-
-```bash
-# 之前
-python -c "import requests; print(requests.__version__)"
-
-# 之后
-patchon -c "import requests; print(requests.__version__)"
-```
-
-## 配置
-
-`patchon` 自动从当前目录向上查找配置：
-
-1. 首先查找包含 `[tool.patchon]` 的 `pyproject.toml`
-2. 如果没有，则查找 `patchon.yaml`
-3. 如果都没有找到，报错
-
-### pyproject.toml（推荐）
+推荐使用 `pyproject.toml`：
 
 ```toml
 [tool.patchon]
@@ -91,227 +55,130 @@ strict = true
 package = "requests"
 expected_version = "2.31.0"
 patch_root = "./patches/requests"
-
-[[tool.patchon.patches]]
-package = "fastapi"
-patch_root = "./patches/fastapi"
 ```
 
-### patchon.yaml
+你也可以直接从 [`examples/patchon.yaml.example`](examples/patchon.yaml.example) 开始。
 
-```yaml
-verbose: true
-strict: true
+### 2. 创建补丁文件
 
-patches:
-  - package: requests
-    expected_version: "2.31.0"
-    patch_root: "./patches/requests"
+在 `patch_root` 下镜像目标包里的 Python 文件结构。
 
-  - package: fastapi
-    patch_root: "./patches/fastapi"
-```
+例如：
 
-### 配置字段
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `verbose` | 布尔值 | 启用详细日志 |
-| `strict` | 布尔值 | 设为 `true` 时，任何补丁错误都会导致失败 |
-| `package` | 字符串 | 要补丁的包名（必需） |
-| `expected_version` | 字符串 | 预期的包版本（可选） |
-| `patch_root` | 字符串 | 包含补丁文件的目录（相对于配置文件） |
-
-### 路径解析
-
-`patch_root` 路径相对于配置文件所在目录解析，而不是当前工作目录。这确保了无论从何处运行 `patchon`，行为都是一致的。
-
-例如，使用以下结构：
-
-```
-project/
+```text
+your-project/
 ├── pyproject.toml
-├── src/
-│   └── main.py
 └── patches/
     └── requests/
         └── sessions.py
 ```
 
-如果 `pyproject.toml` 包含 `patch_root = "./patches/requests"`，无论从哪里运行 `patchon`，它都会解析为 `/path/to/project/patches/requests/`。
+如果配置里写的是 `patch_root = "./patches/requests"`，那么 `patchon` 会把：
 
-## CLI 选项
+`patches/requests/sessions.py` -> `requests/sessions.py`
 
-`patchon` 接受自己的选项，其余选项转发给 Python：
+`patch_root` 是相对于配置文件所在目录解析的，不是相对于你当前打开 shell 的目录。
 
-```bash
-# patchon 选项
-patchon --help                    # 显示帮助
-patchon --version                 # 显示版本
-patchon --check                   # 验证配置
-patchon --print-config            # 打印解析后的配置
-patchon --dry-run script.py       # 显示将要补丁的内容
-patchon --verbose script.py       # 启用详细输出
-patchon --quiet script.py         # 抑制非错误输出
-
-# 转发给 Python
-patchon -m module                 # 运行模块
-patchon -c "command"              # 执行命令字符串
-patchon script.py args...         # 运行脚本并传递参数
-```
-
-## 安全特性
-
-`patchon` 包含多项安全机制：
-
-- **仅 `.py` 文件**：不会触碰二进制扩展（`.so`、`.pyd` 等）
-- **版本检查**：可在补丁前选择性验证包版本
-- **文件存在性检查**：补丁前验证目标文件存在
-- **自动备份**：修改前备份所有文件
-- **保证恢复**：使用 `atexit` 和 `finally` 块确保恢复
-- **重复预防**：拒绝在一次会话中两次补丁同一文件
-- **新文件警告**：如果 >50% 的补丁是新文件（可能配置错误）则发出警告
-
-## 示例工作流程
-
-1. **确定要补丁的文件**：
-   ```bash
-   patchon --check
-   ```
-
-2. **定位包**：
-   ```python
-   import requests
-   print(requests.__file__)
-   # /path/to/site-packages/requests/__init__.py
-   ```
-
-3. **创建补丁结构**：
-   ```bash
-   mkdir -p patches/requests
-   ```
-
-4. **复制并修改文件**：
-   ```bash
-   cp /path/to/site-packages/requests/sessions.py patches/requests/
-   # 编辑 patches/requests/sessions.py
-   ```
-
-5. **测试补丁**：
-   ```bash
-   patchon --dry-run myscript.py
-   patchon myscript.py
-   ```
-
-## 已知限制
-
-- 如果进程被 `SIGKILL`（`kill -9`）终止，无法恢复文件
-- 仅支持补丁 `.py` 源文件（不支持二进制扩展）
-- Windows 文件锁定可能会阻止某些边缘情况正确恢复
-- 不建议同时运行多个 `patchon` 进程对同一包进行补丁
-
-## 开发
-
-### 设置
-
-使用 `uv`（推荐）：
+### 3. 用 `patchon` 运行代码
 
 ```bash
-# 克隆仓库
-git clone https://github.com/cskujou/patchon.git
-cd patchon
-
-# 同步依赖
-uv sync
-
-# Windows 原生构建工具链（GNU，无需 Windows SDK）
-scoop install rustup-gnu mingw-winlibs-llvm-ucrt
-
-# 运行测试
-uv run pytest
-
-# 本地运行 patchon
-uv run patchon --help
+patchon myscript.py
 ```
 
-在 Windows 上，Rust 扩展统一基于 `x86_64-pc-windows-gnu` 工具链进行开发，不再依赖单独安装 Windows SDK 或 MSVC Build Tools。
-
-### 构建
+原本你可能会这样运行：
 
 ```bash
-uv build
+python myscript.py
 ```
 
-这会创建 wheel 和 sdist 到 `dist/`。
-
-### 本地安装
+它也支持模块模式和 `-c` 命令：
 
 ```bash
-uv run pip install dist/patchon-0.1.0-py3-none-any.whl
+patchon -m http.server 8000
+patchon -c "import requests; print(requests.__version__)"
+patchon server.py --port 8000 --debug
 ```
 
-或直接：
+## 一个典型工作流
+
+1. 找到你要 patch 的包文件
+2. 把对应的 `.py` 文件复制到本地补丁目录
+3. 修改这份本地副本
+4. 用 `patchon` 运行目标命令
+5. 等运行结束后让 `patchon` 自动恢复原文件
+
+示例：
 
 ```bash
-uv pip install -e .
+python -c "import requests; print(requests.__file__)"
+mkdir -p patches/requests
+cp /path/to/site-packages/requests/sessions.py patches/requests/
+patchon --dry-run myscript.py
+patchon myscript.py
 ```
 
-### 发布
+## 常用命令
 
-#### 使用 `uv` 手动发布
+这些命令最常用：
 
 ```bash
-# 构建并发布到 PyPI
-uv build
-uv publish
+patchon --help
+patchon --version
+patchon --check
+patchon --print-config
+patchon --dry-run myscript.py
+patchon --cleanup-status
+patchon --cleanup
 ```
 
-您需要先配置 PyPI 凭证：
+`patchon` 会先解析自己的参数，再把剩余参数转发给 Python。
+
+## 安全行为
+
+`patchon` 的设计目标是“临时、可回滚”的源码补丁：
+
+- 只处理 `.py` 文件
+- 修改前先备份
+- 正常退出时自动恢复
+- 可通过 `expected_version` 做版本校验
+- 当补丁目录结构可疑时给出警告
+- 尽量避免多个 patch 会话互相冲突
+
+## 排查问题
+
+### 找不到配置
+
+请创建带有 `[tool.patchon]` 的 `pyproject.toml`，或创建 `patchon.yaml`。
+
+### 版本不匹配
+
+当前安装的包版本和 `expected_version` 不一致。可以更新补丁，或者在不需要该校验时去掉版本约束。
+
+### 文件没有恢复
+
+如果进程被强行杀掉，可以先执行：
 
 ```bash
-uv publish --token $PYPI_TOKEN
-# 或
-uv publish --username $PYPI_USERNAME --password $PYPI_PASSWORD
+patchon --cleanup
 ```
 
-#### 使用 GitHub Actions 自动发布
-
-查看 `.github/workflows/publish.yml` 了解使用 Trusted Publishing 的自动发布。
-
-## 故障排除
-
-### "No configuration found"
-
-`patchon` 需要配置文件。在项目根目录创建 `pyproject.toml` 或 `patchon.yaml`。
-
-### "Version mismatch"
-
-包版本与 `expected_version` 不匹配。更新您的补丁或移除版本限制。
-
-### "More than 50% of patches are new files"
-
-此警告表明大部分补丁会创建新文件而非修改现有文件。请仔细检查您的 `patch_root` 配置和目录结构。
-
-### 文件未恢复
-
-如果恢复失败（例如进程被终止），您可能需要手动重新安装受影响的包：
+必要时重新安装受影响的包：
 
 ```bash
 pip install --force-reinstall package_name
 ```
 
-## 贡献
+## 更多文档
 
-欢迎贡献！请：
+- [English README](README.md)
+- [安装](docs/docs/getting-started/installation.md)
+- [配置](docs/docs/getting-started/configuration.md)
+- [进阶指南](docs/docs/user-guide/advanced.md)
 
-1. Fork 仓库
-2. 创建功能分支（`git checkout -b feature/my-feature`）
-3. 进行更改
-4. 运行测试（`uv run pytest`）
-5. 提交更改（`git commit -am 'Add feature'`）
-6. 推送到分支（`git push origin feature/my-feature`）
-7. 发起 Pull Request
+## 开发
+
+如果你是想参与 `patchon` 本身的开发，更深入的构建和贡献说明在 `docs/` 与 `.github/` 里。
 
 ## 许可证
 
-MIT License - 详见 [LICENSE](LICENSE) 文件。
+MIT License，详见 [LICENSE](LICENSE)。

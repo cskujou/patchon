@@ -16,12 +16,9 @@
 ### Installing with Rust
 
 ```bash
-pip install "patchon[rust]"
-```
-
-Or build from source:
-
-```bash
+git clone https://github.com/cskujou/patchon.git
+cd patchon
+uv sync --group dev
 uv run maturin develop --release
 ```
 
@@ -30,8 +27,9 @@ On Windows, use the GNU Rust toolchain (`x86_64-pc-windows-gnu`) together with `
 ### Verify Rust Extension
 
 ```python
-from patchon._rust_ext import _RUST_AVAILABLE
-print(_RUST_AVAILABLE)  # True if loaded
+import patchon
+
+print(patchon.NATIVE_BACKEND)  # "rust" if the extension is loaded
 ```
 
 ## Environment Locking
@@ -129,18 +127,20 @@ if session.apply_all():
     session.restore()
 ```
 
-## Custom Backup Location
+## Custom Lock Directory
 
-By default, backups go to temp directories. You can customize this:
+By default, lock files go to the system temp directory. You can customize this:
 
 ```python
-from patchon._rust_ext import EnvironmentLock, fast_file_copy
+from pathlib import Path
+
+from patchon.lock import EnvironmentLock
 
 # Use custom lock directory
 lock = EnvironmentLock(lock_dir=Path("./.patchon_locks"))
-with lock:
+if lock.acquire("my-environment"):
     # Your patching code
-    pass
+    lock.release()
 ```
 
 ## Performance Tips

@@ -154,7 +154,8 @@ patchon/
 ├── README.md                   # English documentation
 ├── README_zh.md               # Chinese documentation
 ├── LICENSE                     # MIT License
-├── patchon.yaml.example        # Example configuration
+├── examples/
+│   └── patchon.yaml.example    # Example configuration
 ├── src/
 │   ├── patchon/               # Main Python package
 │   │   ├── __init__.py
@@ -170,6 +171,7 @@ patchon/
 │       └── ...
 ├── rust/                      # Rust extension crate
 │   ├── Cargo.toml             # Rust package manifest
+│   ├── build/                 # Rust build artifacts
 │   └── src/
 │       └── lib.rs             # Rust source code
 ├── tests/                      # Test suite

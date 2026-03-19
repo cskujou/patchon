@@ -5,6 +5,20 @@
 - Python 3.11 or higher
 - For Rust extension: Rust toolchain (optional but recommended)
 
+## Recommended Install
+
+For most users, one of these two commands is the right choice:
+
+```bash
+pip install patchon
+```
+
+Or install it as a standalone CLI with `uv`:
+
+```bash
+uv tool install patchon
+```
+
 ## Quick Try (No Installation)
 
 The fastest way to try `patchon` without installing is using `uvx`:
@@ -24,13 +38,9 @@ uvx patchon -m http.server 8000
 
 ## Standard Installation
 
-Install from PyPI as a project dependency:
+Install from PyPI into your current Python environment:
 
 ```bash
-# Using uv (recommended)
-uv add --dev patchon
-
-# Or using pip
 pip install patchon
 ```
 
@@ -53,12 +63,17 @@ uv tool upgrade patchon
 uv tool uninstall patchon
 ```
 
+This is the closest equivalent to installing a dedicated end-user command.
+
 ## Installation with Rust Extensions
 
-For maximum performance, install with the Rust-accelerated extensions:
+For maximum performance, build the Rust extension from source:
 
 ```bash
-pip install "patchon[rust]"
+git clone https://github.com/cskujou/patchon.git
+cd patchon
+uv sync --group dev
+uv run maturin develop --release
 ```
 
 This enables:
@@ -68,7 +83,7 @@ This enables:
 - More efficient file locking
 
 !!! note "Rust Toolchain Required"
-    Installing with Rust extensions requires a working Rust toolchain.
+    Building with Rust extensions requires a working Rust toolchain.
     On Windows, prefer the GNU toolchain (`x86_64-pc-windows-gnu`) so no separate Windows SDK or MSVC installation is needed.
 
 ## Development Installation
@@ -111,7 +126,7 @@ patchon 0.1.0
 To check if Rust extensions are available:
 
 ```bash
-python -c "from patchon._rust_ext import _RUST_AVAILABLE; print(f'Rust available: {_RUST_AVAILABLE}')"
+python -c "import patchon; print(f'Native backend: {patchon.NATIVE_BACKEND}')"
 ```
 
 ## Next Steps

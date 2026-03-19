@@ -11,6 +11,7 @@ wheels/
 .pytest_cache/
 .coverage
 htmlcov/
+.mypy_cache/
 
 # Compiled native extensions
 *.so
@@ -33,6 +34,7 @@ uv.lock
 
 # Rust
 rust/target/
+rust/build/
 rust-target-gnu/
 patchon_rs/
 

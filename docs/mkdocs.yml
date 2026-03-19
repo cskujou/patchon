@@ -1,5 +1,5 @@
 site_name: Patchon Documentation
-site_description: Run Python scripts with temporary source-file hot patches
+site_description: Run Python with temporary source patches applied and restored automatically
 site_author: patchon contributors
 site_url: https://example.github.io/patchon
 

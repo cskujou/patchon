@@ -4,17 +4,30 @@
 [![PyPI](https://img.shields.io/pypi/v/patchon)](https://pypi.org/project/patchon/)
 [![Python](https://img.shields.io/pypi/pyversions/patchon)](https://pypi.org/project/patchon/)
 
-**Run Python scripts with temporary source-file hot patches applied before execution and restored afterward.**
+`patchon` (pronounced `patch-on`) runs your Python code with temporary source patches applied before execution, then restores the original files afterward.
 
-## What is Patchon?
+## What It Does
 
-`patchon` provides a seamless way to apply temporary patches to Python libraries while running scripts. It automatically:
+Use `patchon` when you want to temporarily change installed Python package code without manually editing `site-packages` and then cleaning up later.
 
-- ✅ Applies patches from your `.py` patch files before running
-- ✅ Runs your script normally with patched libraries
-- ✅ Automatically restores original files when done
-- ✅ Prevents concurrent patching conflicts (process-safe)
-- ✅ Recover from crashes with `--cleanup` command
+Typical use cases:
+
+- Debug a library by adding prints or logging
+- Try a local hotfix before an upstream release lands
+- Inject instrumentation for profiling or tracing
+- Reproduce and test a package-level workaround safely
+
+## Install
+
+```bash
+pip install patchon
+```
+
+Or install it as a user-facing CLI tool with `uv`:
+
+```bash
+uv tool install patchon
+```
 
 ## Quick Example
 
@@ -23,14 +36,7 @@
 patchon myscript.py
 ```
 
-That's it! Patches defined in your configuration are automatically applied, your script runs, and files are restored.
-
-## Use Cases
-
-- **Debugging**: Add logging or print statements to library internals
-- **Hotfixes**: Apply temporary fixes before official patches are released
-- **Testing**: Inject mocks or instrumentation without modifying the library permanently
-- **Profiling**: Add performance probes temporarily
+Patches defined in your configuration are applied before the command runs, then restored when the run finishes.
 
 ## Key Features
 
@@ -40,20 +46,8 @@ That's it! Patches defined in your configuration are automatically applied, your
 | 🔒 Safe | Automatic backups, verification, and guaranteed restoration |
 | 🔄 Recovery | `--cleanup` command recovers from SIGKILL or crashes |
 | 🔐 Exclusive Locks | Prevents concurrent modification conflicts |
-| 📝 Simple Config | pyproject.toml or YAML-based configuration |
+| 📝 Simple Config | `pyproject.toml` or `patchon.yaml` |
 | 🧪 Dry Run | Preview changes without applying them |
-
-## Installation
-
-```bash
-pip install patchon
-```
-
-For development with Rust acceleration:
-
-```bash
-pip install patchon[rust]
-```
 
 ## Next Steps
 

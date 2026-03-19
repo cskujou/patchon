@@ -1,5 +1,5 @@
 # Example patchon.yaml configuration
-# Place this file in your project root or use [tool.patchon] in pyproject.toml
+# Place a copy of this file in your project root, or use [tool.patchon] in pyproject.toml
 
 # Enable verbose output
 verbose: false

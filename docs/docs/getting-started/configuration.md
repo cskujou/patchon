@@ -43,6 +43,8 @@ patches:
     patch_root: "./patches/fastapi"
 ```
 
+An example file is available at `examples/patchon.yaml.example`.
+
 ## Configuration Fields
 
 ### Global Options

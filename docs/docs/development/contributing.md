@@ -87,7 +87,7 @@ uv run patchon --dry-run demo.py
 - **Python Version**: 3.11+ with modern type hints (`list`, `dict`, `|` instead of `Union`)
 - **Type Hints**: All functions should have complete type annotations
 - **Docstrings**: Use Google style docstrings
-- **Line Length**: 100 characters (enforced by ruff)
+- **Line Length**: 120 characters (enforced by ruff)
 
 Example:
 
@@ -194,7 +194,7 @@ Please include:
 Use conventional commit format:
 
 ```
-feat: add support for Python 3.13
+feat: add support for Python 3.14
 fix: handle edge case in version parsing
 docs: update installation instructions
 test: add tests for cleanup functionality
